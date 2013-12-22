@@ -6,7 +6,6 @@ var c = canvas.getContext('2d');
 
 //very important this object, know as the element contains all items that need to be drawn
 //might contain data about player/items/monsters later on, who knows XD
-e = {};
 
 wall = new Image();
 wall.src = "img/wall.png";
@@ -14,20 +13,28 @@ wall.src = "img/wall.png";
 floor = new Image();
 floor.src = "img/dirt.png";
 
-mainMap = [
-[1,0,0,0,0,0,0,0,0,3,0,0,0,0,0],
-[0,1,0,0,0,1,1,1,3,0,0,0,0,0,3],
-[0,1,0,0,1,1,1,0,1,3,0,0,0,0,0],
-[1,0,0,0,0,0,0,0,0,3,0,0,0,0,0],
-[0,1,0,0,0,0,1,1,1,3,0,0,0,0,0],
-[0,1,0,0,1,1,1,0,1,3,0,0,0,0,0],
-[1,0,0,0,0,0,0,0,0,3,0,0,0,0,0],
-[0,1,0,0,0,0,1,1,1,3,0,0,0,0,0],
-[0,1,0,0,1,1,1,0,1,3,0,0,0,0,0],
-[1,0,0,0,0,0,0,0,0,3,0,0,0,0,0],
-[0,1,0,0,0,0,1,1,1,3,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-];
+playerImg = new Image();
+playerImg.src = "img/player.png";
+
+e = {};
+
+player = {
+	loc: {x: 0, y: 0},
+	image: playerImg
+};
+
+wall = new Image();
+wall.src = "img/wall.png";
+
+floor = new Image();
+floor.src = "img/dirt.png";
+
+playerImg = new Image();
+playerImg.src = "img/player.png";
+
+
+//
+
 //we need some events dear watson
 window.addEventListener("load", eventWindowLoaded, false);
 window.addEventListener("keydown", eventKeyPressed, true);
@@ -35,11 +42,32 @@ window.addEventListener("keydown", eventKeyPressed, true);
 canvas.addEventListener("click", mouseClicked, false);
 
 
+function mapGenerator(sizeX, sizeY){
+	var map = [];
+	var mapCol = [];
+	var mapRow = [];
+	//Generates a blank maze
+	for(var dy = 0; dy < sizeY; dy++){
+		mapRow = [];
+		for(var dx = 0; dx < sizeX; dx++){
+			if(Math.random() > .5){
+				mapRow[dx] = 0;
+			}else{
+				mapRow[dx] = 1;
+			};
+		}
+		map[dy] = mapRow;
+	}
 
+	return map;
+
+}
 //the moving increment for all objects
 tileSize = {x: 32, y: 32};
 //the size of the game screen
 size = {x: 1024, y: 576};
+
+mainMap = mapGenerator(size.x/tileSize.x, size.y/tileSize.y);
 
 changeWindowSize();
 
@@ -49,30 +77,20 @@ function eventWindowLoaded(){
 };
 
 function eventKeyPressed(keyEvent){
-	var keyCode = keyEvent.keyCode;
-	var player;
 
-	//is the player box there?
-	if(e['player']){
-		//Yes! Good
-		player = e['player'];
-	}else{
-		//Bad! Let's draw him. 
-	 	drawBox('#eafc25', 32, 32, 0, 0, 0, 'player');
-	 	player = e['player'];
-	}
+	var keyCode = keyEvent.keyCode;
 	if(keyCode == 37){
 		keyEvent.preventDefault();
-		e['player'].locX -= tileSize.x;
+		movePlayer(player.loc.x - tileSize.x, player.loc.y);
 	}else if(keyCode == 38){
 		keyEvent.preventDefault();
-		e['player'].locY -= tileSize.y;
+		movePlayer(player.loc.x, player.loc.y - tileSize.y);
 	}else if(keyCode == 39){
 		keyEvent.preventDefault();
-		e['player'].locX += tileSize.x;
+		movePlayer(player.loc.x + tileSize.x, player.loc.y);
 	}else if(keyCode == 40){
 		keyEvent.preventDefault();
-		e['player'].locY += tileSize.y;
+		movePlayer(player.loc.x, player.loc.y + tileSize.y);
 	};
 
 
@@ -84,8 +102,23 @@ function eventKeyPressed(keyEvent){
 	//Down: 40
 };
 
+
+
+function movePlayer(desiredX, desiredY){
+	var locInMaze = mainMap[desiredY/tileSize.y][desiredX/tileSize.x];
+
+	if(locInMaze == 1){
+		player.loc 	= {x: desiredX, y: desiredY};
+		e['player'].locX = desiredX;
+		e['player'].locY = desiredY;
+		return true;
+
+	}else{
+		return false;
+	};
+};
+
 function mouseClicked(event){
-	console.log(event);
 
 };
 function changeWindowSize(){
@@ -152,12 +185,11 @@ function drawMap(map){
 };
 function drawPlayer(){
 if(e['player']){
-	console.log('Yes player!')
 		//Yes! Good
 
 	}else{
 		//Bad! Let's draw him. 
-	 	drawBox('#eafc25', 32, 32, 0, 0, 0, 'player');
+	 	drawImage( playerImg, player.loc.x, player.loc.y, 0, 'player');
 	}
 };
 
@@ -169,13 +201,12 @@ function mapTileHandler(tileNumber){
 	if(tileNumber == 1){
 		return floor;
 	}
-	return wall;
+	return wall ;
 }
 //another important function. Takes all the elements from the element list (e) and draws them on the screen
 // still need to find a way to handle z indexs. Somehow need to rearrange keys in object by the z index.
 function drawScreen(elements){
 	clearCanvas();
-	console.log(elements);
 	for(var i = 0; i < Object.keys(e).length; i++){
 
 		var eBeta = Object.keys(e)[i];
@@ -189,14 +220,11 @@ function drawScreen(elements){
 			c.drawImage(ePrime.image, ePrime.locX, ePrime.locY);
 		};
 	};
-	console.log("We drew " + i + " boxes");
-	console.log("We should have drawn " + (mainMap.length*mainMap[0].length) + " boxes");
 };
 function JSHack() {
 
 	drawMap(mainMap);
 	drawPlayer();
 	drawScreen();
-	console.log(e);
 	//might handle game logic later on. Depreciated function.
 };
