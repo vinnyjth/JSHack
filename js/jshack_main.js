@@ -4,8 +4,13 @@ var canvas = document.getElementById('JSHack');
 var c = canvas.getContext('2d');
 
 
+
 //very important this object, know as the element contains all items that need to be drawn
 //might contain data about player/items/monsters later on, who knows XD
+//the moving increment for all objects
+tileSize = {x: 32, y: 32};
+//the size of the game screen
+size = {x: 1024, y: 576};
 
 wall = new Image();
 wall.src = "img/wall.png";
@@ -23,14 +28,6 @@ player = {
 	image: playerImg
 };
 
-wall = new Image();
-wall.src = "img/wall.png";
-
-floor = new Image();
-floor.src = "img/dirt.png";
-
-playerImg = new Image();
-playerImg.src = "img/player.png";
 
 
 //
@@ -46,33 +43,112 @@ function mapGenerator(sizeX, sizeY){
 	var map = [];
 	var mapCol = [];
 	var mapRow = [];
+
+	this.sizeX = sizeX;
+	this.sizeY = sizeY;
 	//Generates a blank maze
-	for(var dy = 0; dy < sizeY; dy++){
-		mapRow = [];
-		for(var dx = 0; dx < sizeX; dx++){
-			if(Math.random() > .5){
-				mapRow[dx] = 0;
-			}else{
-				mapRow[dx] = 1;
-			};
+	this.randomMaze = randomMaze;
+
+	function randomMaze(){
+		var map = [];
+		for(var dy = 0; dy < sizeY; dy++){
+			var mapRow = [];
+			for(var dx = 0; dx < sizeX; dx++){
+				if(Math.random() > .43){
+					mapRow[dx] = 0;
+				}else{
+					mapRow[dx] = 1;
+				};
+			}
+			map[dy] = mapRow;
 		}
-		map[dy] = mapRow;
+		return map;
+	};
+
+
+	this.cellularStep = cellularStep;
+
+	function cellularStep(map){
+		var newMap = []
+		var deathLimit = 3;
+		var birthLimit = 5;
+		for(var y = 0; y < map.length; y++){
+			var mapRow = []
+			for(var x = 0; x < map[y].length; x++){
+				wallsAround = countAliveNeighbors(map, x, y);
+
+				if(map[y][x] == 0){
+					if( wallsAround > 4){
+						mapRow[x] = 0;
+					}else{
+						mapRow[x] = 1;						
+					}
+				}
+				else{
+					if(wallsAround > 5){
+						mapRow[x] = 0;
+					}else{
+						mapRow[x] = 1;						
+					}					
+				}
+				newMap[y] = mapRow; 
+
+			}
+		}
+		return newMap;
+	};
+
+	this.buildCave = buildCave
+	function buildCave(steps){
+		theMaze = randomMaze();
+		for (var i = 0; i < steps; i++) {
+			theMaze = cellularStep(theMaze);
+		};
+		return theMaze;
 	}
 
-	return map;
+};
 
-}
-//the moving increment for all objects
-tileSize = {x: 32, y: 32};
-//the size of the game screen
-size = {x: 1024, y: 576};
+function countAliveNeighbors(map, cellX, cellY){
+	var count = 0;
+	for(var i = -1; i < 2; i++){
+		for(var j = -1; j < 2; j++){
+			neighborX = cellX + j;
+			neighborY = cellY + i;
+			if(i == 0 && j == 0){
+			}else if(neighborX < 0 || neighborY < 0 || neighborY >= map.length || neighborX > map[0].length){
+				count++;
+			}else if(map[neighborY][neighborX] == 0){
+				count++;
+			}
+		}
+	}
+	return count;
+};
 
-mainMap = mapGenerator(size.x/tileSize.x, size.y/tileSize.y);
+level1 = new mapGenerator(size.x/tileSize.x, size.y/tileSize.y);
+
+
+mainMap = level1.buildCave(2);
 
 changeWindowSize();
 
+
+/* function placePlayerInMap(map){
+	var playerMapLocation = {x:0, y:0};
+	for(var dy = 0; dy < map.length; dy++){
+		for(var dx = 0; dx < map[dy].length; dx++){
+			if(map[dy][dx] == 1 && countAliveNeighbors(map, dx, dy) > 4){
+				movePlayer(dx*tileSize.x, dy*tileSize.y);
+				drawPlayer();	
+				return;
+			}
+		}
+	}
+}*/
 //do nothing right now
 function eventWindowLoaded(){
+	//placePlayerInMap(mainMap);
 	JSHack();
 };
 
@@ -92,8 +168,6 @@ function eventKeyPressed(keyEvent){
 		keyEvent.preventDefault();
 		movePlayer(player.loc.x, player.loc.y + tileSize.y);
 	};
-
-
 	//draw all elements on screen.
 	JSHack();
 	//Needed keycodes: Left: 37
@@ -119,7 +193,12 @@ function movePlayer(desiredX, desiredY){
 };
 
 function mouseClicked(event){
-
+	
+	mapX = Math.floor(event.offsetX/tileSize.x);
+	mapY = Math.floor(event.offsetY/tileSize.y);
+	console.log(mapX + " " + mapY)
+	console.log(level1.countAliveNeighbors(mainMap, mapX, mapY));
+	JSHack();
 };
 function changeWindowSize(){
 	canvas.width = size.x;
