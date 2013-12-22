@@ -1,0 +1,15 @@
+body{
+	background-color: #3b3b3b;
+}
+canvas{
+
+	background-color: #a6a6a6; 
+	border-style: solid;
+	border-color: 5px;
+	border-color: #930c16
+}
+.canvas-div{
+	text-align: center;
+	margin: 0 auto;
+	margin-top: 50px;
+}
