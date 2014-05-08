@@ -1,7 +1,7 @@
 body{
 	background-color: #3b3b3b;
 }
-canvas{
+.primary-canvas{
 
 	background-color: #a6a6a6; 
 	border-style: solid;
@@ -12,4 +12,12 @@ canvas{
 	text-align: center;
 	margin: 0 auto;
 	margin-top: 50px;
+}
+.gui{
+}
+.dragme{
+	position: absolute;
+}
+#GUI{
+	display: none;
 }
